@@ -18,6 +18,7 @@
 
 static void initClockInterrupt();
 static void clockInterruptHandler();
+static bool isClockReady();
 
 static void initBusRead();
 static void updateBusRead();
@@ -34,18 +35,11 @@ void setup() {
 }
 
 void loop() {
-    while (1) {
-        noInterrupts();
-        bool ready = clockReady;
-        clockReady = false;
-        interrupts();
-
-        if (!ready) {
-            break;
-        }
-
-        updateBusRead();
+    if (!isClockReady()) {
+        return;
     }
+
+    updateBusRead();
 }
 
 static void initClockInterrupt() {
@@ -56,6 +50,14 @@ static void initClockInterrupt() {
 
 static void clockInterruptHandler() {
     clockReady = true;
+}
+
+static bool isClockReady() {
+    noInterrupts();
+    bool ready = clockReady;
+    clockReady = false;
+    interrupts();
+    return ready;
 }
 
 static void initBusRead() {
