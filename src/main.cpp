@@ -81,15 +81,8 @@ static void updateBusRead() {
     uint8_t data = PINC;
     uint8_t misc = PINL;
 
-    if (BIT_IS_SET(misc, 2)) {
-        TRACE.println();
-    }
-
-    char vpb  = BOOL_PIN(misc, 0, '-', 'V');
-    char mlb  = BOOL_PIN(misc, 1, '-', 'M');
-    char sync = BOOL_PIN(misc, 2, 'S', '-');
-    char rwb  = BOOL_PIN(misc, 3, 'R', 'W');
-    sprintf(outbuf, "A:%04x D:%02x %c%c%c%c", addr, data, vpb, mlb, sync, rwb);
+    char rwb  = BOOL_PIN(misc, 3, 'r', 'W');
+    sprintf(outbuf, "A:%04x D:%02x %c", addr, data, rwb);
 
     TRACE.println(outbuf);
 }
