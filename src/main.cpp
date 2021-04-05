@@ -12,6 +12,7 @@
 // External serial board connected to Serial2 TXD2/TXR2 MEGA(16,17)
 
 #include <Arduino.h>
+#include "disasm.h"
 
 #define CLOCK_PIN   2
 #define TRACE       Serial2
@@ -25,6 +26,7 @@ static void updateBusRead();
 static volatile bool clockReady = false;
 
 char outbuf[128];
+static Disassembler disasm;
 
 void setup() {
     TRACE.begin(115200);
@@ -82,7 +84,28 @@ static void updateBusRead() {
     uint8_t misc = PINL;
 
     char rwb  = BOOL_PIN(misc, 3, 'r', 'W');
-    sprintf(outbuf, "A:%04x D:%02x %c", addr, data, rwb);
+    bool sync = BOOL_PIN(misc, 2, true, false);
+
+    if (sync) {
+        if (disasm.isDecoding()) {
+            disasm.reset(); // sync is on, but we are already reading
+        }
+        else {
+            disasm.decodeByte(data);
+        }
+    }
+    else if (disasm.isDecoding()) {
+        disasm.decodeByte(data);
+    }
+
+    if (disasm.isReady()) {
+        sprintf(outbuf, "A:%04x D:%02x %c %s", addr, data, rwb,
+            disasm.text());
+        disasm.clear();
+    }
+    else {
+        sprintf(outbuf, "A:%04x D:%02x %c", addr, data, rwb);
+    }
 
     TRACE.println(outbuf);
 }
