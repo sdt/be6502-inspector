@@ -5,7 +5,7 @@
 // Address pins: 6502(A0-A15) -> MEGA(A0-A15) Port F & K
 // Data pins:    6502(D0-D7)  -> MEGA(37-30)  Port C
 // Misc pins:    6502(VPB)    -> MEGA(49)     Port L0
-//               6502(MLB)    -> MEGA(48)     Port L1
+//               6502(MLB)    -> MEGA(48)     Port L1   don't need this one
 //               6502(SYNC)   -> MEGA(47)     Port L2
 //               6502(RWB)    -> MEGA(46)     Port L3
 //
@@ -83,28 +83,33 @@ static void updateBusRead() {
     uint8_t data = PINC;
     uint8_t misc = PINL;
 
-    char rwb  = BOOL_PIN(misc, 3, 'r', 'W');
-    bool sync = BOOL_PIN(misc, 2, true, false);
+    bool read   = BOOL_PIN(misc, 3, true, false);
+    bool sync   = BOOL_PIN(misc, 2, true, false);
+    bool vector = BOOL_PIN(misc, 0, false, true);
 
-    if (sync) {
-        if (disasm.isDecoding()) {
-            disasm.reset(); // sync is on, but we are already reading
-        }
-        else {
-            disasm.decodeByte(data);
-        }
+    char r = BOOL_PIN(misc, 3, 'r', 'W');
+    char s = BOOL_PIN(misc, 2, 'S', '-');
+    char v = BOOL_PIN(misc, 0, '-', 'V');
+
+    // r-V = vector
+    // rS- = start instruction
+
+    bool showOpcode = false;
+    if (vector) {
+        disasm.reset();
     }
-    else if (disasm.isDecoding()) {
+    else if (read && (sync || disasm.isDecoding())) {
         disasm.decodeByte(data);
+        showOpcode = disasm.isReady();
     }
 
-    if (disasm.isReady()) {
-        sprintf(outbuf, "A:%04x D:%02x %c %s", addr, data, rwb,
-            disasm.text());
+    if (showOpcode) {
+        sprintf(outbuf, "A:%04x D:%02x %c%c%c %s",
+            addr, data, r, s, v, disasm.text());
         disasm.clear();
     }
     else {
-        sprintf(outbuf, "A:%04x D:%02x %c", addr, data, rwb);
+        sprintf(outbuf, "A:%04x D:%02x %c%c%c", addr, data, r, s, v);
     }
 
     TRACE.println(outbuf);
