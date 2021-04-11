@@ -94,13 +94,22 @@ static void updateBusRead() {
     // r-V = vector
     // rS- = start instruction
 
+    static uint16_t pc = 0;
+
     bool showOpcode = false;
     if (vector) {
         disasm.reset();
     }
-    else if (read && (sync || disasm.isDecoding())) {
+    else if (sync) {
+        disasm.reset();
         disasm.decodeByte(data);
         showOpcode = disasm.isReady();
+        pc = addr;
+    }
+    else if (read && disasm.isDecoding() && (addr == pc + 1)) {
+        disasm.decodeByte(data);
+        showOpcode = disasm.isReady();
+        pc = addr;
     }
 
     if (showOpcode) {
