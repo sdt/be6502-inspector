@@ -15,7 +15,7 @@
 #include "disasm.h"
 
 #define CLOCK_PIN   2
-#define TRACE       Serial2
+#define TRACE       Serial
 
 static void initClockInterrupt();
 static void clockInterruptHandler();
